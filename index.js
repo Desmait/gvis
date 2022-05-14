@@ -1,4 +1,3 @@
-
 var scene = new THREE.Scene();
 var camera = new THREE.PerspectiveCamera(50, window.innerWidth/window.innerHeight);
 var renderer = new THREE.WebGLRenderer({antialias: true});
@@ -28,6 +27,7 @@ const material = new THREE.LineMaterial( {
     // linewidth: 5,
     vertexColors: true,
     alphaToCoverage: true,
+    sizeAttenuation: false,
     onBeforeCompile: shader => {
         shader.vertexShader = `
             ${shader.vertexShader}
@@ -36,6 +36,8 @@ const material = new THREE.LineMaterial( {
     }
 } );
 
+const extrudeFactor = 0.1;
+
 document.getElementById('file').onchange = function() {
 
     var file = this.files[0];
@@ -43,6 +45,7 @@ document.getElementById('file').onchange = function() {
     let z = 0;
     let e = 0;
     let color = 'SKIRT';
+    let centerObj = {};
 
     var reader = new FileReader();
     reader.onload = function(progressEvent) {
@@ -51,13 +54,43 @@ document.getElementById('file').onchange = function() {
 
             let commands = lines[line].split(" ");
 
-            if (commands[0].slice(0, 6) === ';TYPE:') {
+            if (commands[0].slice(0, 4) === ';MIN') {
+                commands[0] = commands[0].replace(/\r/g, '');
+
+                switch (commands[0].charAt(6)) {
+                    case 'X':
+                        centerObj.minX = commands[0].substring(6);
+                        break;
+                    case 'Y':
+                        centerObj.minY = commands[0].substring(6);
+                        break;
+                    default:
+                        break;
+                }
+            } else if (commands[0].slice(0, 4) === ';MAX') {
+                commands[0] = commands[0].replace(/\r/g, '');
+
+                switch (commands[0].charAt(6)) {
+                    case 'X':
+                        centerObj.maxX = commands[0].substring(6);
+                        break;
+                    case 'Y':
+                        centerObj.maxY = commands[0].substring(6);
+                        break;
+                    case 'Z':
+                        centerObj.maxZ = commands[0].substring(6);
+                        break;
+                    default:
+                        break;
+                }
+            } else if (commands[0].slice(0, 6) === ';TYPE:') {
                 commands[0] = commands[0].replace(/\r/g, '');
 
                 color = commands[0].substring(6).toString();
 
             } else if (commands[0] === 'G1' || commands[0] === 'G0') {
                 let obj = {};
+                obj.e = 0;
 
                 for (let i = 1; i < commands.length; i++) {
                     commands[i] = commands[i].replace(/\r/g, '');
@@ -88,7 +121,7 @@ document.getElementById('file').onchange = function() {
                     }
                 }
 
-                if (obj.x && obj.y && z !== '' && obj.e) {
+                if (obj.x && obj.y && z !== '') {
                     obj.z = z;
                     obj.color = color;
 
@@ -99,18 +132,37 @@ document.getElementById('file').onchange = function() {
 
         }
 
+        let centerX = (centerObj.maxX - centerObj.minX) / 2 + centerObj.minX;
+        let centerY = (centerObj.maxY - centerObj.minY) / 2 + centerObj.minY;
+        let centerZ = centerObj.maxZ / 2;
+
         const points = [0, 0, 0];
         const widths = [];
         const colors = [];
 
+        let lastPoint;
+
+        console.log(result);
+
         result.forEach(obj => {
             points.push(obj.x, obj.y, obj.z);
 
-            console.log(obj.color);
             colors.push(materialPull[obj.color].r, materialPull[obj.color].g, materialPull[obj.color].b);
-            widths.push(THREE.MathUtils.randFloat(0.0001, 0.001));
-        });
 
+            if (lastPoint == undefined) {
+                lastPoint = obj;
+            }
+
+            let lineLength = calculateLength(lastPoint, obj);
+
+            if (lineLength == 0 || obj.e <= 0) {
+                widths.push(0);
+            } else {
+                widths.push(obj.e / lineLength * extrudeFactor);
+            }
+
+            lastPoint = obj;
+        });
         const geometry = new THREE.LineGeometry()
         geometry.setPositions(points);
         geometry.setColors(colors);
@@ -132,3 +184,11 @@ renderer.setAnimationLoop( _ => {
     // material.resolution.set(innerWidth, innerHeight);
     renderer.render(scene, camera);
 });
+
+function calculateLength(p1, p2) {
+    var a = p2.x - p1.x;
+    var b = p2.y - p1.y;
+    var c = p2.z - p1.z;
+
+    return Math.sqrt(a * a + b * b + c * c);
+}
