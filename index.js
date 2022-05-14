@@ -2,8 +2,10 @@ var scene = new THREE.Scene();
 var camera = new THREE.PerspectiveCamera(50, window.innerWidth/window.innerHeight);
 var renderer = new THREE.WebGLRenderer({antialias: true});
 renderer.setSize(window.innerWidth - 50, window.innerHeight - 50);
-camera.up.set(0, 0, 1);
 document.body.appendChild(renderer.domElement);
+
+const gridHelper = new THREE.GridHelper(210, 20);
+scene.add(gridHelper);
 
 const materialPull = {
     'SKIRT': {r:75, g:0, b:0.51},
@@ -19,15 +21,17 @@ const controls = new THREE.OrbitControls( camera, renderer.domElement );
 controls.enableDamping = true;
 controls.dampingFactor = 0.7;
 controls.screenSpacePanning = false;
-controls.minDistance = 100;
+controls.minDistance = 10;
 controls.maxDistance = 1000;
+
+camera.position.set(0, 200, 200);
 
 const material = new THREE.LineMaterial( {
     // color: 0x0000ff,
     // linewidth: 5,
     vertexColors: true,
     alphaToCoverage: true,
-    sizeAttenuation: false,
+    worldUnits : true,
     onBeforeCompile: shader => {
         shader.vertexShader = `
             ${shader.vertexShader}
@@ -36,7 +40,7 @@ const material = new THREE.LineMaterial( {
     }
 } );
 
-const extrudeFactor = 0.1;
+const extrudeFactor = 11;
 
 document.getElementById('file').onchange = function() {
 
@@ -57,12 +61,12 @@ document.getElementById('file').onchange = function() {
             if (commands[0].slice(0, 4) === ';MIN') {
                 commands[0] = commands[0].replace(/\r/g, '');
 
-                switch (commands[0].charAt(6)) {
+                switch (commands[0].charAt(4)) {
                     case 'X':
-                        centerObj.minX = commands[0].substring(6);
+                        centerObj.minX = parseFloat(commands[0].substring(6));
                         break;
                     case 'Y':
-                        centerObj.minY = commands[0].substring(6);
+                        centerObj.minY = parseFloat(commands[0].substring(6));
                         break;
                     default:
                         break;
@@ -70,15 +74,15 @@ document.getElementById('file').onchange = function() {
             } else if (commands[0].slice(0, 4) === ';MAX') {
                 commands[0] = commands[0].replace(/\r/g, '');
 
-                switch (commands[0].charAt(6)) {
+                switch (commands[0].charAt(4)) {
                     case 'X':
-                        centerObj.maxX = commands[0].substring(6);
+                        centerObj.maxX = parseFloat(commands[0].substring(6));
                         break;
                     case 'Y':
-                        centerObj.maxY = commands[0].substring(6);
+                        centerObj.maxY = parseFloat(commands[0].substring(6));
                         break;
                     case 'Z':
-                        centerObj.maxZ = commands[0].substring(6);
+                        centerObj.maxZ = parseFloat(commands[0].substring(6));
                         break;
                     default:
                         break;
@@ -142,10 +146,11 @@ document.getElementById('file').onchange = function() {
 
         let lastPoint;
 
-        console.log(result);
-
         result.forEach(obj => {
-            points.push(obj.x, obj.y, obj.z);
+            let x = obj.x - centerX;
+            let y = obj.y - centerY;
+
+            points.push(x, obj.z, -y);
 
             colors.push(materialPull[obj.color].r, materialPull[obj.color].g, materialPull[obj.color].b);
 
