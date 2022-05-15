@@ -36,7 +36,6 @@ const material = new THREE.LineMaterial( {
         shader.vertexShader = `
             ${shader.vertexShader}
         `.replace(`uniform float linewidth;`, `attribute float linewidth;`);
-        // console.log(shader.vertexShader)
     }
 } );
 
@@ -49,7 +48,7 @@ document.getElementById('file').onchange = function() {
     let z = 0;
     let e = 0;
     let color = 'SKIRT';
-    let centerObj = {};
+    let objInfo = {};
 
     var reader = new FileReader();
     reader.onload = function(progressEvent) {
@@ -58,15 +57,38 @@ document.getElementById('file').onchange = function() {
 
             let commands = lines[line].split(" ");
 
-            if (commands[0].slice(0, 4) === ';MIN') {
+            if (commands[0].slice(0, 5) === ';TIME' || commands[0].slice(0, 7) === ';FLAVOR'
+                || commands[0].slice(0, 9) === ';Filament' || commands[0].slice(0, 10) === ';Generated') {
+                commands[0] = commands[0].replace(/\r/g, '');
+
+                let tempStr = commands[0].substring(1).substring(0, commands[0].substring(1).indexOf(':')) ?
+                    commands[0].substring(1).substring(0, commands[0].substring(1).indexOf(':')) : commands[0].substring(1);
+
+                switch (tempStr) {
+                    case 'TIME':
+                        objInfo.time = new Date(commands[0].substring(6) * 1000).toISOString().substr(11, 8);
+                        break;
+                    case 'Filament':
+                        objInfo.filamentUsed = lines[line].substring(16).replace(/\r/g, '');
+                        break;
+                    case 'FLAVOR':
+                        objInfo.flavor = commands[0].substring(8);
+                        break;
+                    case 'Generated':
+                        objInfo.generatedWith = lines[line].substring(1).replace(/\r/g, '');
+                        break;
+                    default:
+                        break;
+                }
+            } else if (commands[0].slice(0, 4) === ';MIN') {
                 commands[0] = commands[0].replace(/\r/g, '');
 
                 switch (commands[0].charAt(4)) {
                     case 'X':
-                        centerObj.minX = parseFloat(commands[0].substring(6));
+                        objInfo.minX = parseFloat(commands[0].substring(6));
                         break;
                     case 'Y':
-                        centerObj.minY = parseFloat(commands[0].substring(6));
+                        objInfo.minY = parseFloat(commands[0].substring(6));
                         break;
                     default:
                         break;
@@ -76,13 +98,13 @@ document.getElementById('file').onchange = function() {
 
                 switch (commands[0].charAt(4)) {
                     case 'X':
-                        centerObj.maxX = parseFloat(commands[0].substring(6));
+                        objInfo.maxX = parseFloat(commands[0].substring(6));
                         break;
                     case 'Y':
-                        centerObj.maxY = parseFloat(commands[0].substring(6));
+                        objInfo.maxY = parseFloat(commands[0].substring(6));
                         break;
                     case 'Z':
-                        centerObj.maxZ = parseFloat(commands[0].substring(6));
+                        objInfo.maxZ = parseFloat(commands[0].substring(6));
                         break;
                     default:
                         break;
@@ -130,15 +152,16 @@ document.getElementById('file').onchange = function() {
                     obj.color = color;
 
                     result.push(obj);
-                    // console.log(obj);
                 }
             }
 
         }
 
-        let centerX = (centerObj.maxX - centerObj.minX) / 2 + centerObj.minX;
-        let centerY = (centerObj.maxY - centerObj.minY) / 2 + centerObj.minY;
-        let centerZ = centerObj.maxZ / 2;
+        let centerX = (objInfo.maxX - objInfo.minX) / 2 + objInfo.minX;
+        let centerY = (objInfo.maxY - objInfo.minY) / 2 + objInfo.minY;
+        objInfo.modelLenght = objInfo.maxY - objInfo.minY;
+        objInfo.modelWidth = objInfo.maxX - objInfo.minX;
+        objInfo.modelHeight = objInfo.maxZ;
 
         const points = [0, 0, 0];
         const widths = [];
