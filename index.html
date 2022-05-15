@@ -9,6 +9,9 @@
 </head>
 <body>
 <input type="file" name="file" id="file" />
+<input type="checkbox" id="transparency" name="transparency" onclick='handleClick(this);'>
+<label for="transparency"> Enable transparency</label><br>
+<div id="slider"></div>
 
 <script src="js/three.js"></script>
 
@@ -19,6 +22,8 @@
 <script src="js/lines/LineSegmentsGeometry.js"></script>
 <script src="js/lines/LineGeometry.js"></script>
 <script src="js/lines/LineMaterial.js"></script>
+<link href="css/nouislider.css" rel="stylesheet">
+<script src="js/nouislider.js"></script>
 <!-- <script src="js/lines/Wireframe.js"></script> -->
 <!-- <script src="js/lines/WireframeGeometry2.js"></script> -->
 

@@ -39,12 +39,21 @@ const material = new THREE.LineMaterial( {
     }
 } );
 
-const extrudeFactor = 11;
+let extrudeFactor = 11;
+
+var slider = document.getElementById('slider');
+
+let result = [];
+let centerX = 0;
+let centerY = 0;
+
 
 document.getElementById('file').onchange = function() {
 
+    clearScene();
+
     var file = this.files[0];
-    let result = [];
+    result = [];
     let z = 0;
     let e = 0;
     let color = 'SKIRT';
@@ -82,29 +91,31 @@ document.getElementById('file').onchange = function() {
                 }
             } else if (commands[0].slice(0, 4) === ';MIN') {
                 commands[0] = commands[0].replace(/\r/g, '');
+                let tempRez = parseFloat(commands[0].substring(6));
 
                 switch (commands[0].charAt(4)) {
                     case 'X':
-                        objInfo.minX = parseFloat(commands[0].substring(6));
+                        objInfo.minX = tempRez;
                         break;
                     case 'Y':
-                        objInfo.minY = parseFloat(commands[0].substring(6));
+                        objInfo.minY = tempRez;
                         break;
                     default:
                         break;
                 }
             } else if (commands[0].slice(0, 4) === ';MAX') {
                 commands[0] = commands[0].replace(/\r/g, '');
+                let tempRez = parseFloat(commands[0].substring(6));
 
                 switch (commands[0].charAt(4)) {
                     case 'X':
-                        objInfo.maxX = parseFloat(commands[0].substring(6));
+                        objInfo.maxX = tempRez;
                         break;
                     case 'Y':
-                        objInfo.maxY = parseFloat(commands[0].substring(6));
+                        objInfo.maxY = tempRez;
                         break;
                     case 'Z':
-                        objInfo.maxZ = parseFloat(commands[0].substring(6));
+                        objInfo.maxZ = tempRez;
                         break;
                     default:
                         break;
@@ -157,51 +168,39 @@ document.getElementById('file').onchange = function() {
 
         }
 
-        let centerX = (objInfo.maxX - objInfo.minX) / 2 + objInfo.minX;
-        let centerY = (objInfo.maxY - objInfo.minY) / 2 + objInfo.minY;
+        centerX = (objInfo.maxX - objInfo.minX) / 2 + objInfo.minX;
+        centerY = (objInfo.maxY - objInfo.minY) / 2 + objInfo.minY;
         objInfo.modelLenght = objInfo.maxY - objInfo.minY;
         objInfo.modelWidth = objInfo.maxX - objInfo.minX;
         objInfo.modelHeight = objInfo.maxZ;
 
-        const points = [0, 0, 0];
-        const widths = [];
-        const colors = [];
+        if (slider.noUiSlider !== undefined) {
+            slider.noUiSlider.updateOptions({
+                start: [0, result.length],
+                range: {
+                    'min': 0,
+                    'max': result.length - 1
+                }
+            });
+        }
 
-        let lastPoint;
+        renderModel();
 
-        result.forEach(obj => {
-            let x = obj.x - centerX;
-            let y = obj.y - centerY;
+        if (slider.noUiSlider === undefined) {
+            noUiSlider.create(slider, {
+                start: [0, result.length],
+                connect: true,
+                step: 1,
+                range: {
+                    'min': 0,
+                    'max': result.length - 1
+                }
+            });
+        }
 
-            points.push(x, obj.z, -y);
-
-            colors.push(materialPull[obj.color].r, materialPull[obj.color].g, materialPull[obj.color].b);
-
-            if (lastPoint == undefined) {
-                lastPoint = obj;
-            }
-
-            let lineLength = calculateLength(lastPoint, obj);
-
-            if (lineLength == 0 || obj.e <= 0) {
-                widths.push(0);
-            } else {
-                widths.push(obj.e / lineLength * extrudeFactor);
-            }
-
-            lastPoint = obj;
+        slider.noUiSlider.on('update', function () {
+            renderModel();
         });
-        const geometry = new THREE.LineGeometry()
-        geometry.setPositions(points);
-        geometry.setColors(colors);
-        geometry.setAttribute("linewidth", new THREE.InstancedBufferAttribute(new Float32Array(widths), 1));
-
-        const renderLine = new THREE.Line2(geometry, material);
-
-        // renderLine.computeLineDistances();
-        // renderLine.scale.set( 1, 1, 1 );
-
-        scene.add(renderLine);
     };
 
     reader.readAsText(file);
@@ -209,7 +208,6 @@ document.getElementById('file').onchange = function() {
 
 renderer.setAnimationLoop( _ => {
     controls.update();
-    // material.resolution.set(innerWidth, innerHeight);
     renderer.render(scene, camera);
 });
 
@@ -219,4 +217,68 @@ function calculateLength(p1, p2) {
     var c = p2.z - p1.z;
 
     return Math.sqrt(a * a + b * b + c * c);
+}
+
+function clearScene() {
+    scene.remove.apply(scene, scene.children);
+    scene.add(gridHelper);
+}
+
+function renderModel() {
+    clearScene();
+    let points = [0, 0, 0];
+    let widths = [];
+    let colors = [];
+
+    let lastPoint;
+
+    let sliderPos = slider.noUiSlider !== undefined ? slider.noUiSlider.get() : [0, result.length-1];
+
+    for (let i = parseInt(sliderPos[0]); i < parseInt(sliderPos[1]); i++) {
+        let obj = result[i];
+        let x = obj.x - centerX;
+        let y = obj.y - centerY;
+
+        points.push(x, obj.z, -y);
+
+        colors.push(materialPull[obj.color].r, materialPull[obj.color].g, materialPull[obj.color].b);
+
+        if (lastPoint == undefined) {
+            lastPoint = obj;
+        }
+
+        let lineLength = calculateLength(lastPoint, obj);
+
+        if (lineLength == 0 || obj.e <= 0) {
+            widths.push(0);
+        } else {
+            widths.push(obj.e / lineLength * extrudeFactor);
+        }
+
+        lastPoint = obj;
+    }
+
+    const geometry = new THREE.LineGeometry()
+    geometry.setPositions(points);
+    geometry.setColors(colors);
+    geometry.setAttribute("linewidth", new THREE.InstancedBufferAttribute(new Float32Array(widths), 1));
+
+    const renderLine = new THREE.Line2(geometry, material);
+
+    // renderLine.computeLineDistances();
+    // renderLine.scale.set( 1, 1, 1 );
+
+    scene.add(renderLine);
+}
+
+function handleClick(cb) {
+    if (cb.checked) {
+        extrudeFactor = 1;
+    } else {
+        extrudeFactor = 11;
+    }
+
+    if (result.length !== 0) {
+        renderModel();
+    }
 }
