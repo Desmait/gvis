@@ -7,14 +7,14 @@ document.body.appendChild(renderer.domElement);
 const gridHelper = new THREE.GridHelper(210, 20);
 scene.add(gridHelper);
 
-const materialPull = {
-    'SKIRT': {r:75, g:0, b:0.51},
-    'SKIN': {r:75, g:0, b:0.51},
-    'WALL-INNER': {r:255, g:215, b:0.00},
-    'WALL-OUTER': {r:255, g:215, b:0.00},
-    'SUPPORT': {r:0, g:0, b:1.00},
-    'SUPPORT-INTERFACE': {r:0, g:0, b:1.00},
-    'FILL': {r:255, g:0, b:0.00}
+const materialPool = {
+    'SKIRT': {r:75, g:0, b:0.51, visibility: true},
+    'SKIN': {r:75, g:0, b:0.51, visibility: true},
+    'WALL-INNER': {r:255, g:215, b:0.00, visibility: true},
+    'WALL-OUTER': {r:255, g:215, b:0.00, visibility: true},
+    'SUPPORT': {r:0, g:0, b:1.00, visibility: true},
+    'SUPPORT-INTERFACE': {r:0, g:0, b:1.00, visibility: true},
+    'FILL': {r:255, g:0, b:0.00, visibility: true}
 }
 
 const controls = new THREE.OrbitControls( camera, renderer.domElement );
@@ -26,12 +26,18 @@ controls.maxDistance = 1000;
 
 camera.position.set(0, 200, 200);
 
+const startClip = new THREE.Plane( new THREE.Vector3( 0, 1, 0 ), -0 );
+const endClip = new THREE.Plane( new THREE.Vector3( 0, -1, 0 ), 0 );
+
+renderer.localClippingEnabled = true;
+
 const material = new THREE.LineMaterial( {
     // color: 0x0000ff,
     // linewidth: 5,
     vertexColors: true,
     alphaToCoverage: true,
     worldUnits : true,
+    clippingPlanes: [startClip, endClip],
     onBeforeCompile: shader => {
         shader.vertexShader = `
             ${shader.vertexShader}
@@ -58,6 +64,7 @@ document.getElementById('file').onchange = function() {
     let e = 0;
     let color = 'SKIRT';
     let objInfo = {};
+    let layersHeights = [];
 
     var reader = new FileReader();
     reader.onload = function(progressEvent) {
@@ -99,6 +106,9 @@ document.getElementById('file').onchange = function() {
                         break;
                     case 'Y':
                         objInfo.minY = tempRez;
+                        break;
+                    case 'Z':
+                        objInfo.minZ = tempRez;
                         break;
                     default:
                         break;
@@ -162,24 +172,35 @@ document.getElementById('file').onchange = function() {
                     obj.z = z;
                     obj.color = color;
 
+                    if (layersHeights.indexOf(z) === -1) {
+                        layersHeights.push(z);
+                    }
+
                     result.push(obj);
                 }
             }
 
         }
 
+        layersHeights.splice(0, 3);
+        layersHeights = layersHeights.map(Number);
+
         centerX = (objInfo.maxX - objInfo.minX) / 2 + objInfo.minX;
         centerY = (objInfo.maxY - objInfo.minY) / 2 + objInfo.minY;
         objInfo.modelLenght = objInfo.maxY - objInfo.minY;
         objInfo.modelWidth = objInfo.maxX - objInfo.minX;
-        objInfo.modelHeight = objInfo.maxZ;
+        objInfo.modelHeight = objInfo.maxZ - objInfo.minZ;
+        objInfo.layersQuantity = layersHeights.length;
+
+        startClip.constant = 0;
+        endClip.constant = objInfo.modelHeight + 0.1;
 
         if (slider.noUiSlider !== undefined) {
             slider.noUiSlider.updateOptions({
-                start: [0, result.length],
+                start: [0, layersHeights.length],
                 range: {
                     'min': 0,
-                    'max': result.length - 1
+                    'max': layersHeights.length
                 }
             });
         }
@@ -188,17 +209,22 @@ document.getElementById('file').onchange = function() {
 
         if (slider.noUiSlider === undefined) {
             noUiSlider.create(slider, {
-                start: [0, result.length],
+                start: [0, layersHeights.length],
                 connect: true,
                 step: 1,
                 range: {
                     'min': 0,
-                    'max': result.length - 1
+                    'max': layersHeights.length
                 }
             });
         }
 
-        slider.noUiSlider.on('update', debounce(() => renderModel(), 5));
+        slider.noUiSlider.on('update', () => {
+            let values = slider.noUiSlider != undefined ? slider.noUiSlider.get() : [objInfo.minZ, objInfo.maxZ];
+            console.log()
+            startClip.constant = -(layersHeights[parseFloat(values[0])]- 0.1);
+            endClip.constant = layersHeights[parseFloat(values[1])] + 0.1;
+        });
     };
 
     reader.readAsText(file);
@@ -230,31 +256,30 @@ function renderModel() {
 
     let lastPoint;
 
-    let sliderPos = slider.noUiSlider !== undefined ? slider.noUiSlider.get() : [0, result.length-1];
+    result.forEach(obj => {
+        if (materialPool[obj.color].visibility) {
+            let x = obj.x - centerX;
+            let y = obj.y - centerY;
 
-    for (let i = parseInt(sliderPos[0]); i < parseInt(sliderPos[1]); i++) {
-        let obj = result[i];
-        let x = obj.x - centerX;
-        let y = obj.y - centerY;
+            points.push(x, obj.z, -y);
 
-        points.push(x, obj.z, -y);
+            colors.push(materialPool[obj.color].r, materialPool[obj.color].g, materialPool[obj.color].b);
 
-        colors.push(materialPull[obj.color].r, materialPull[obj.color].g, materialPull[obj.color].b);
+            if (lastPoint == undefined) {
+                lastPoint = obj;
+            }
 
-        if (lastPoint == undefined) {
+            let lineLength = calculateLength(lastPoint, obj);
+
+            if (lineLength == 0 || obj.e <= 0) {
+                widths.push(0);
+            } else {
+                widths.push(obj.e / lineLength * extrudeFactor);
+            }
+
             lastPoint = obj;
         }
-
-        let lineLength = calculateLength(lastPoint, obj);
-
-        if (lineLength == 0 || obj.e <= 0) {
-            widths.push(0);
-        } else {
-            widths.push(obj.e / lineLength * extrudeFactor);
-        }
-
-        lastPoint = obj;
-    }
+    });
 
     const geometry = new THREE.LineGeometry()
     geometry.setPositions(points);
@@ -281,18 +306,10 @@ function handleClick(cb) {
     }
 }
 
-function debounce(func, wait, immediate) {
-    var timeout;
-    return function() {
-        var context = this,
-            args = arguments;
-        var later = function() {
-            timeout = null;
-            if (!immediate) func.apply(context, args);
-        };
-        var callNow = immediate && !timeout;
-        clearTimeout(timeout);
-        timeout = setTimeout(later, wait);
-        if (callNow) func.apply(context, args);
-    };
+function changeVisibility(type) {
+    materialPool[type].visibility = !materialPool[type].visibility;
+
+    if (result.length !== 0) {
+        renderModel();
+    }
 }

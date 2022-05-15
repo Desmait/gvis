@@ -11,6 +11,20 @@
 <input type="file" name="file" id="file" />
 <input type="checkbox" id="x-ray" name="x-ray" onclick='handleClick(this);'>
 <label for="x-ray"> Enable X-Ray</label><br>
+<input type="checkbox" id="skirt" name="skirt" checked onclick='changeVisibility("SKIRT");'>
+<label for="skirt"> Enable Skirt</label>
+<input type="checkbox" id="skin" name="skin" checked onclick='changeVisibility("SKIN");'>
+<label for="skin"> Enable Skin</label>
+<input type="checkbox" id="wall-inner" name="wall-inner" checked onclick='changeVisibility("WALL-INNER");'>
+<label for="wall-inner"> Enable Wall-inner</label>
+<input type="checkbox" id="wall-outer" name="wall-outer" checked onclick='changeVisibility("WALL-OUTER");'>
+<label for="wall-outer"> Enable Wall-outer</label>
+<input type="checkbox" id="support" name="support" checked onclick='changeVisibility("SUPPORT");'>
+<label for="support"> Enable Support</label>
+<input type="checkbox" id="support-interface" checked name="support-interface" onclick='changeVisibility("SUPPORT-INTERFACE");'>
+<label for="support-interface"> Enable Support-interface</label>
+<input type="checkbox" id="fill" name="fill" checked onclick='changeVisibility("FILL");'>
+<label for="fill"> Enable Fill</label>
 <div id="slider"></div>
 
 <script src="js/three.js"></script>
