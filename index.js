@@ -1,7 +1,8 @@
 var scene = new THREE.Scene();
 var camera = new THREE.PerspectiveCamera(50, window.innerWidth/window.innerHeight);
-var renderer = new THREE.WebGLRenderer({antialias: true});
+var renderer = new THREE.WebGLRenderer({antialias: true, alpha: true});
 renderer.setSize(window.innerWidth - 50, window.innerHeight - 50);
+renderer.setClearColor( 0xffffff, 0 );
 document.body.appendChild(renderer.domElement);
 
 const gridHelper = new THREE.GridHelper(210, 20);
@@ -211,7 +212,16 @@ document.getElementById('file').onchange = function() {
             noUiSlider.create(slider, {
                 start: [0, layersHeights.length],
                 connect: true,
+                direction: 'rtl',
+                orientation: 'vertical',
                 step: 1,
+                tooltips: true,
+                // // Show a scale with the slider
+                // pips: {
+                //     mode: 'steps',
+                //     stepped: true,
+                //     density: 25
+                // },
                 range: {
                     'min': 0,
                     'max': layersHeights.length
@@ -257,28 +267,26 @@ function renderModel() {
     let lastPoint;
 
     result.forEach(obj => {
-        if (materialPool[obj.color].visibility) {
-            let x = obj.x - centerX;
-            let y = obj.y - centerY;
+        let x = obj.x - centerX;
+        let y = obj.y - centerY;
 
-            points.push(x, obj.z, -y);
+        points.push(x, obj.z, -y);
 
-            colors.push(materialPool[obj.color].r, materialPool[obj.color].g, materialPool[obj.color].b);
+        colors.push(materialPool[obj.color].r, materialPool[obj.color].g, materialPool[obj.color].b);
 
-            if (lastPoint == undefined) {
-                lastPoint = obj;
-            }
-
-            let lineLength = calculateLength(lastPoint, obj);
-
-            if (lineLength == 0 || obj.e <= 0) {
-                widths.push(0);
-            } else {
-                widths.push(obj.e / lineLength * extrudeFactor);
-            }
-
+        if (lastPoint == undefined) {
             lastPoint = obj;
         }
+
+        let lineLength = calculateLength(lastPoint, obj);
+
+        if (lineLength == 0 || obj.e <= 0 || !materialPool[obj.color].visibility) {
+            widths.push(0);
+        } else {
+            widths.push(obj.e / lineLength * extrudeFactor);
+        }
+
+        lastPoint = obj;
     });
 
     const geometry = new THREE.LineGeometry()

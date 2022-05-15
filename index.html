@@ -7,37 +7,101 @@
         body { margin: 0; }
     </style>
 </head>
-<body>
-<input type="file" name="file" id="file" />
-<input type="checkbox" id="x-ray" name="x-ray" onclick='handleClick(this);'>
-<label for="x-ray"> Enable X-Ray</label><br>
-<input type="checkbox" id="skirt" name="skirt" checked onclick='changeVisibility("SKIRT");'>
-<label for="skirt"> Enable Skirt</label>
-<input type="checkbox" id="skin" name="skin" checked onclick='changeVisibility("SKIN");'>
-<label for="skin"> Enable Skin</label>
-<input type="checkbox" id="wall-inner" name="wall-inner" checked onclick='changeVisibility("WALL-INNER");'>
-<label for="wall-inner"> Enable Wall-inner</label>
-<input type="checkbox" id="wall-outer" name="wall-outer" checked onclick='changeVisibility("WALL-OUTER");'>
-<label for="wall-outer"> Enable Wall-outer</label>
-<input type="checkbox" id="support" name="support" checked onclick='changeVisibility("SUPPORT");'>
-<label for="support"> Enable Support</label>
-<input type="checkbox" id="support-interface" checked name="support-interface" onclick='changeVisibility("SUPPORT-INTERFACE");'>
-<label for="support-interface"> Enable Support-interface</label>
-<input type="checkbox" id="fill" name="fill" checked onclick='changeVisibility("FILL");'>
-<label for="fill"> Enable Fill</label>
-<div id="slider"></div>
+<body id="container">
 
-<script src="js/three.js"></script>
+    <div id="controls" style="z-index: 2;right:30px;top:50px">
+        <div class="accordion accordion-flush" id="accordionFlushExample">
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="flush-headingThree">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapseThree" aria-expanded="false" aria-controls="flush-collapseThree">
+                        Upload Gcode
+                    </button>
+                </h2>
+                <div id="flush-collapseThree" class="accordion-collapse collapse" aria-labelledby="flush-headingThree" data-bs-parent="#accordionFlushExample">
+                    <div class="accordion-body">
+                        <input type="file" name="file" id="file" />
+                    </div>
+                </div>
+            </div>
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="flush-headingTwo">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapseTwo" aria-expanded="false" aria-controls="flush-collapseTwo">
+                        Model Info
+                    </button>
+                </h2>
+                <div id="flush-collapseTwo" class="accordion-collapse collapse" aria-labelledby="flush-headingTwo" data-bs-parent="#accordionFlushExample">
+                    <div class="accordion-body">
 
-<script src="js/THREE.MeshLine.js"></script>
+                    </div>
+                </div>
+            </div>
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="flush-headingOne">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapseOne" aria-expanded="false" aria-controls="flush-collapseOne">
+                        Visibility Settings
+                    </button>
+                </h2>
+                <div id="flush-collapseOne" class="accordion-collapse collapse" aria-labelledby="flush-headingOne" data-bs-parent="#accordionFlushExample">
+                    <div class="accordion-body">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="x-ray" onclick='handleClick(this);'>
+                            <label class="form-check-label" for="x-ray">X-Ray Mode</label>
+                        </div>
+                        <hr>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="skirt" checked onclick='changeVisibility("SKIRT");'>
+                            <label class="form-check-label" for="skirt">Show Skirt</label>
+                        </div>
+                        <hr>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="skin" checked onclick='changeVisibility("SKIN");'>
+                            <label class="form-check-label" for="skin">Show Skin</label>
+                        </div>
+                        <hr>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="wall-inner" checked onclick='changeVisibility("WALL-INNER");'>
+                            <label class="form-check-label" for="wall-inner">Show Wall-inner</label>
+                        </div>
+                        <hr>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="wall-outer" checked onclick='changeVisibility("WALL-OUTER");'>
+                            <label class="form-check-label" for="wall-outer">Show Wall-outer</label>
+                        </div>
+                        <hr>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="support" checked onclick='changeVisibility("SUPPORT");'>
+                            <label class="form-check-label" for="support">Show Support</label>
+                        </div>
+                        <hr>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="support-interface" checked onclick='changeVisibility("SUPPORT-INTERFACE");'>
+                            <label class="form-check-label" for="support-interface">Show Support-interface</label>
+                        </div>
+                        <hr>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="fill" checked onclick='changeVisibility("FILL");'>
+                            <label class="form-check-label" for="fill">Show Fill</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div style="z-index: 1; top: 400px; left: 40px; height: 500px" id="slider"></div>
 
-<script src="js/lines/LineSegments2.js"></script>
-<script src="js/lines/Line2.js"></script>
-<script src="js/lines/LineSegmentsGeometry.js"></script>
-<script src="js/lines/LineGeometry.js"></script>
-<script src="js/lines/LineMaterial.js"></script>
-<link href="css/nouislider.css" rel="stylesheet">
-<script src="js/nouislider.js"></script>
+    <script src="js/three.js"></script>
+
+    <script src="js/THREE.MeshLine.js"></script>
+
+    <script src="js/lines/LineSegments2.js"></script>
+    <script src="js/lines/Line2.js"></script>
+    <script src="js/lines/LineSegmentsGeometry.js"></script>
+    <script src="js/lines/LineGeometry.js"></script>
+    <script src="js/lines/LineMaterial.js"></script>
+    <link href="css/nouislider.css" rel="stylesheet">
+    <script src="js/nouislider.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
 <!-- <script src="js/lines/Wireframe.js"></script> -->
 <!-- <script src="js/lines/WireframeGeometry2.js"></script> -->
 
@@ -45,4 +109,22 @@
 
 <script src="index.js"></script>
 </body>
+<style>
+    #container {
+        position: relative;
+    }
+
+    #container canvas, #slider, #controls {
+        position: absolute;
+    }
+
+    canvas {
+    }
+
+    #controls {
+        width: 450px;
+        height: 300px;
+    }
+
+</style>
 </html>

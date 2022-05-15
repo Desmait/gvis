@@ -285,8 +285,8 @@
   bottom: 120%;
 }
 .noUi-vertical .noUi-tooltip {
-  -webkit-transform: translate(0, -50%);
-  transform: translate(0, -50%);
+  -webkit-transform: translate(200%, -50%);
+  transform: translate(200%, -50%);
   top: 50%;
   right: 120%;
 }
