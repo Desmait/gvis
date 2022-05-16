@@ -75,7 +75,8 @@ document.getElementById('file').onchange = function() {
             let commands = lines[line].split(" ");
 
             if (commands[0].slice(0, 5) === ';TIME' || commands[0].slice(0, 7) === ';FLAVOR'
-                || commands[0].slice(0, 9) === ';Filament' || commands[0].slice(0, 10) === ';Generated') {
+                || commands[0].slice(0, 9) === ';Filament' || commands[0].slice(0, 10) === ';Generated'
+                || commands[0].slice(0, 6) === ';Layer') {
                 commands[0] = commands[0].replace(/\r/g, '');
 
                 let tempStr = commands[0].substring(1).substring(0, commands[0].substring(1).indexOf(':')) ?
@@ -93,6 +94,9 @@ document.getElementById('file').onchange = function() {
                         break;
                     case 'Generated':
                         objInfo.generatedWith = lines[line].substring(1).replace(/\r/g, '');
+                        break;
+                    case 'Layer':
+                        objInfo.layerHeight = lines[line].substring(15).replace(/\r/g, '');
                         break;
                     default:
                         break;
@@ -183,6 +187,7 @@ document.getElementById('file').onchange = function() {
 
         }
 
+        console.log(layersHeights);
         layersHeights.splice(0, 3);
         layersHeights = layersHeights.map(Number);
 
@@ -192,6 +197,8 @@ document.getElementById('file').onchange = function() {
         objInfo.modelWidth = objInfo.maxX - objInfo.minX;
         objInfo.modelHeight = objInfo.maxZ - objInfo.minZ;
         objInfo.layersQuantity = layersHeights.length;
+
+        addModelInfo(objInfo);
 
         startClip.constant = 0;
         endClip.constant = objInfo.modelHeight + 0.1;
@@ -215,6 +222,7 @@ document.getElementById('file').onchange = function() {
                 direction: 'rtl',
                 orientation: 'vertical',
                 step: 1,
+                margin: 1,
                 tooltips: true,
                 // // Show a scale with the slider
                 // pips: {
@@ -231,7 +239,6 @@ document.getElementById('file').onchange = function() {
 
         slider.noUiSlider.on('update', () => {
             let values = slider.noUiSlider != undefined ? slider.noUiSlider.get() : [objInfo.minZ, objInfo.maxZ];
-            console.log()
             startClip.constant = -(layersHeights[parseFloat(values[0])]- 0.1);
             endClip.constant = layersHeights[parseFloat(values[1])] + 0.1;
         });
@@ -294,6 +301,8 @@ function renderModel() {
     geometry.setColors(colors);
     geometry.setAttribute("linewidth", new THREE.InstancedBufferAttribute(new Float32Array(widths), 1));
 
+    const edges = new THREE.EdgesGeometry( geometry );
+    console.log(edges);
     const renderLine = new THREE.Line2(geometry, material);
 
     // renderLine.computeLineDistances();
@@ -320,4 +329,16 @@ function changeVisibility(type) {
     if (result.length !== 0) {
         renderModel();
     }
+}
+
+function addModelInfo(objInfo) {
+    document.getElementById("model_name").innerHTML = 'model';
+    document.getElementById("print_time").innerHTML = objInfo.time;
+    document.getElementById("filament_used").innerHTML = objInfo.filamentUsed;
+    document.getElementById("layers_quantity").innerHTML = objInfo.layersQuantity;
+    document.getElementById("layer_height").innerHTML = objInfo.modelHeight;
+    document.getElementById("model_width").innerHTML = objInfo.modelWidth;
+    document.getElementById("model_length").innerHTML = objInfo.modelLenght;
+    document.getElementById("flavor").innerHTML = objInfo.flavor;
+    document.getElementById("generated").innerHTML = objInfo.generatedWith;
 }

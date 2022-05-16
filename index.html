@@ -31,7 +31,25 @@
                 </h2>
                 <div id="flush-collapseTwo" class="accordion-collapse collapse" aria-labelledby="flush-headingTwo" data-bs-parent="#accordionFlushExample">
                     <div class="accordion-body">
-
+                        <b>Model name: <span id="model_name">Name</span></b><br>
+                        <hr>
+                        <b>Print time: <span id="print_time">00:00:00</span></b><br>
+                        <hr>
+                        <b>Filament used: <span id="filament_used">0m</span></b><br>
+                        <hr>
+                        <b>Layers quantity: <span id="layers_quantity">0</span></b><br>
+                        <hr>
+                        <b>Layer height: <span id="layer_height">0</span></b><br>
+                        <hr>
+                        <b>Model width: <span id="model_width">0</span></b><br>
+                        <hr>
+                        <b>Model length: <span id="model_length">0</span></b><br>
+                        <hr>
+                        <b>Model height: <span id="model_height">0</span></b><br>
+                        <hr>
+                        <b>Gcode flavor: <span id="flavor">Flavor</span></b><br>
+                        <hr>
+                        <b>Generated: <span id="generated">Slicer</span></b><br>
                     </div>
                 </div>
             </div>
@@ -124,6 +142,14 @@
     #controls {
         width: 450px;
         height: 300px;
+    }
+
+    hr {
+        margin: 10px 0;
+    }
+
+    span {
+        font-weight: normal;
     }
 
 </style>
