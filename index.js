@@ -205,9 +205,9 @@ document.getElementById('file').onchange = function() {
 
         if (slider.noUiSlider !== undefined) {
             slider.noUiSlider.updateOptions({
-                start: [0, layersHeights.length],
+                start: [1, layersHeights.length],
                 range: {
-                    'min': 0,
+                    'min': 1,
                     'max': layersHeights.length
                 }
             });
@@ -217,12 +217,12 @@ document.getElementById('file').onchange = function() {
 
         if (slider.noUiSlider === undefined) {
             noUiSlider.create(slider, {
-                start: [0, layersHeights.length],
+                start: [1, layersHeights.length],
                 connect: true,
                 direction: 'rtl',
                 orientation: 'vertical',
                 step: 1,
-                margin: 1,
+                margin: 0,
                 tooltips: true,
                 // // Show a scale with the slider
                 // pips: {
@@ -231,7 +231,7 @@ document.getElementById('file').onchange = function() {
                 //     density: 25
                 // },
                 range: {
-                    'min': 0,
+                    'min': 1,
                     'max': layersHeights.length
                 }
             });
@@ -239,8 +239,8 @@ document.getElementById('file').onchange = function() {
 
         slider.noUiSlider.on('update', () => {
             let values = slider.noUiSlider != undefined ? slider.noUiSlider.get() : [objInfo.minZ, objInfo.maxZ];
-            startClip.constant = -(layersHeights[parseFloat(values[0])]- 0.1);
-            endClip.constant = layersHeights[parseFloat(values[1])] + 0.1;
+            startClip.constant = -(layersHeights[parseFloat(values[0])-1]- 0.1);
+            endClip.constant = layersHeights[parseFloat(values[1])-1] + 0.1;
         });
     };
 
