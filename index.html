@@ -13,11 +13,11 @@
         <div class="accordion accordion-flush" id="accordionFlushExample">
             <div class="accordion-item">
                 <h2 class="accordion-header" id="flush-headingThree">
-                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapseThree" aria-expanded="false" aria-controls="flush-collapseThree">
+                    <button class="accordion-button collapsed " type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapseThree" aria-expanded="false" aria-controls="flush-collapseThree">
                         Upload Gcode
                     </button>
                 </h2>
-                <div id="flush-collapseThree" class="accordion-collapse collapse" aria-labelledby="flush-headingThree" data-bs-parent="#accordionFlushExample">
+                <div id="flush-collapseThree" class="accordion-collapse collapse show" aria-labelledby="flush-headingThree" data-bs-parent="#accordionFlushExample">
                     <div class="accordion-body">
                         <input type="file" name="file" id="file" />
                     </div>
@@ -36,6 +36,8 @@
                         <b>Print time: <span id="print_time">00:00:00</span></b><br>
                         <hr>
                         <b>Filament used: <span id="filament_used">0m</span></b><br>
+                        <hr>
+                        <b>Filament Weight: <span id="filament_weight">0g</span></b><br>
                         <hr>
                         <b>Layers quantity: <span id="layers_quantity">0</span></b><br>
                         <hr>

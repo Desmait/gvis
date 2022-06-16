@@ -66,9 +66,12 @@ document.getElementById('file').onchange = function() {
     let color = 'SKIRT';
     let objInfo = {};
     let layersHeights = [];
+    let fileName = 'File Name';
 
     var reader = new FileReader();
+    reader.fileName = file.name;
     reader.onload = function(progressEvent) {
+        fileName = progressEvent.target.fileName;
         var lines = this.result.split('\n');
         for(var line = 0; line < lines.length; line++) {
 
@@ -88,6 +91,8 @@ document.getElementById('file').onchange = function() {
                         break;
                     case 'Filament':
                         objInfo.filamentUsed = lines[line].substring(16).replace(/\r/g, '');
+                        objInfo.filamentUsed = objInfo.filamentUsed.slice(0, objInfo.filamentUsed.length - 1);
+                        objInfo.filamentUsed = parseFloat(objInfo.filamentUsed) * 100;
                         break;
                     case 'FLAVOR':
                         objInfo.flavor = commands[0].substring(8);
@@ -187,7 +192,6 @@ document.getElementById('file').onchange = function() {
 
         }
 
-        console.log(layersHeights);
         layersHeights.splice(0, 3);
         layersHeights = layersHeights.map(Number);
 
@@ -197,6 +201,8 @@ document.getElementById('file').onchange = function() {
         objInfo.modelWidth = objInfo.maxX - objInfo.minX;
         objInfo.modelHeight = objInfo.maxZ - objInfo.minZ;
         objInfo.layersQuantity = layersHeights.length;
+        objInfo.fillamentWeight = (objInfo.filamentUsed * Math.pow(0.175/2, 2) * Math.PI) * 1.25;
+        objInfo.fileName = fileName;
 
         addModelInfo(objInfo);
 
@@ -224,12 +230,6 @@ document.getElementById('file').onchange = function() {
                 step: 1,
                 margin: 0,
                 tooltips: true,
-                // // Show a scale with the slider
-                // pips: {
-                //     mode: 'steps',
-                //     stepped: true,
-                //     density: 25
-                // },
                 range: {
                     'min': 1,
                     'max': layersHeights.length
@@ -301,12 +301,7 @@ function renderModel() {
     geometry.setColors(colors);
     geometry.setAttribute("linewidth", new THREE.InstancedBufferAttribute(new Float32Array(widths), 1));
 
-    const edges = new THREE.EdgesGeometry( geometry );
-    console.log(edges);
     const renderLine = new THREE.Line2(geometry, material);
-
-    // renderLine.computeLineDistances();
-    // renderLine.scale.set( 1, 1, 1 );
 
     scene.add(renderLine);
 }
@@ -332,11 +327,13 @@ function changeVisibility(type) {
 }
 
 function addModelInfo(objInfo) {
-    document.getElementById("model_name").innerHTML = 'model';
+    document.getElementById("model_name").innerHTML = objInfo.fileName;
     document.getElementById("print_time").innerHTML = objInfo.time;
-    document.getElementById("filament_used").innerHTML = objInfo.filamentUsed;
+    document.getElementById("filament_used").innerHTML = (objInfo.filamentUsed.toFixed(0)) + 'cm';
+    document.getElementById("filament_weight").innerHTML = Math.round(objInfo.fillamentWeight) + 'g';
     document.getElementById("layers_quantity").innerHTML = objInfo.layersQuantity;
-    document.getElementById("layer_height").innerHTML = objInfo.modelHeight;
+    document.getElementById("layer_height").innerHTML = objInfo.minZ;
+    document.getElementById("model_height").innerHTML = objInfo.modelHeight;
     document.getElementById("model_width").innerHTML = objInfo.modelWidth;
     document.getElementById("model_length").innerHTML = objInfo.modelLenght;
     document.getElementById("flavor").innerHTML = objInfo.flavor;
