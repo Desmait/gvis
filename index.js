@@ -75,119 +75,84 @@ document.getElementById('file').onchange = function() {
         var lines = this.result.split('\n');
         for(var line = 0; line < lines.length; line++) {
 
-            let commands = lines[line].split(" ");
+            let curLine = lines[line].replace(/\r/g, '');
+            let commands = curLine.split(/[:\s]+/);
 
-            if (commands[0].slice(0, 5) === ';TIME' || commands[0].slice(0, 7) === ';FLAVOR'
-                || commands[0].slice(0, 9) === ';Filament' || commands[0].slice(0, 10) === ';Generated'
-                || commands[0].slice(0, 6) === ';Layer') {
-                commands[0] = commands[0].replace(/\r/g, '');
+            switch (commands[0]) {
+                case ';MINX':
+                case ';MINY':
+                case ';MINZ':
+                case ';MAXX':
+                case ';MAXY':
+                case ';MAXZ':
+                    objInfo[commands[0].substring(1)] = parseFloat(commands[1]);
+                    break;
+                case ';TIME':
+                    objInfo.print_time = new Date(commands[1] * 1000).toISOString().substr(11, 8);
+                    break;
+                case ';FLAVOR':
+                    objInfo.flavor = commands[1];
+                    break;
+                case ';TYPE':
+                    color = commands[1];
+                    break;
+                case ';Generated':
+                    objInfo.generated = lines[line].substring(1).replace(/\r/g, '');
+                    break;
+                case ';Layer':
+                    objInfo.layer_height = commands[2];
+                    break;
+                case ';Filament':
+                    objInfo.filament_used = commands[2];
+                    objInfo.filament_used = objInfo.filament_used.slice(0, objInfo.filament_used.length - 1);
+                    objInfo.filament_used = parseFloat(objInfo.filament_used) * 100;
+                    break;
+                case 'G0':
+                case 'G1':
+                    let obj = {};
+                    obj.e = 0;
 
-                let tempStr = commands[0].substring(1).substring(0, commands[0].substring(1).indexOf(':')) ?
-                    commands[0].substring(1).substring(0, commands[0].substring(1).indexOf(':')) : commands[0].substring(1);
+                    for (let i = 1; i < commands.length; i++) {
+                        switch (commands[i].charAt(0)) {
+                            case 'X':
+                                obj.x = commands[i].substring(1);
+                                break;
+                            case 'Y':
+                                obj.y = commands[i].substring(1);
+                                break;
+                            case 'Z':
+                                z = commands[i].substring(1);
+                                break;
+                            case 'E':
+                                var previousE = e;
+                                var tempE = commands[i].substring(1)
 
-                switch (tempStr) {
-                    case 'TIME':
-                        objInfo.time = new Date(commands[0].substring(6) * 1000).toISOString().substr(11, 8);
-                        break;
-                    case 'Filament':
-                        objInfo.filamentUsed = lines[line].substring(16).replace(/\r/g, '');
-                        objInfo.filamentUsed = objInfo.filamentUsed.slice(0, objInfo.filamentUsed.length - 1);
-                        objInfo.filamentUsed = parseFloat(objInfo.filamentUsed) * 100;
-                        break;
-                    case 'FLAVOR':
-                        objInfo.flavor = commands[0].substring(8);
-                        break;
-                    case 'Generated':
-                        objInfo.generatedWith = lines[line].substring(1).replace(/\r/g, '');
-                        break;
-                    case 'Layer':
-                        objInfo.layerHeight = lines[line].substring(15).replace(/\r/g, '');
-                        break;
-                    default:
-                        break;
-                }
-            } else if (commands[0].slice(0, 4) === ';MIN') {
-                commands[0] = commands[0].replace(/\r/g, '');
-                let tempRez = parseFloat(commands[0].substring(6));
+                                if (tempE !== '') {
+                                    e = tempE;
+                                    obj.e = e - previousE;
+                                } else {
+                                    obj.e = 0;
+                                }
 
-                switch (commands[0].charAt(4)) {
-                    case 'X':
-                        objInfo.minX = tempRez;
-                        break;
-                    case 'Y':
-                        objInfo.minY = tempRez;
-                        break;
-                    case 'Z':
-                        objInfo.minZ = tempRez;
-                        break;
-                    default:
-                        break;
-                }
-            } else if (commands[0].slice(0, 4) === ';MAX') {
-                commands[0] = commands[0].replace(/\r/g, '');
-                let tempRez = parseFloat(commands[0].substring(6));
-
-                switch (commands[0].charAt(4)) {
-                    case 'X':
-                        objInfo.maxX = tempRez;
-                        break;
-                    case 'Y':
-                        objInfo.maxY = tempRez;
-                        break;
-                    case 'Z':
-                        objInfo.maxZ = tempRez;
-                        break;
-                    default:
-                        break;
-                }
-            } else if (commands[0].slice(0, 6) === ';TYPE:') {
-                commands[0] = commands[0].replace(/\r/g, '');
-
-                color = commands[0].substring(6).toString();
-
-            } else if (commands[0] === 'G1' || commands[0] === 'G0') {
-                let obj = {};
-                obj.e = 0;
-
-                for (let i = 1; i < commands.length; i++) {
-                    commands[i] = commands[i].replace(/\r/g, '');
-                    switch (commands[i].charAt(0)) {
-                        case 'X':
-                            obj.x = commands[i].substring(1);
-                            break;
-                        case 'Y':
-                            obj.y = commands[i].substring(1);
-                            break;
-                        case 'Z':
-                            z = commands[i].substring(1);
-                            break;
-                        case 'E':
-                            var previousE = e;
-                            var tempE = commands[i].substring(1)
-
-                            if (tempE !== '') {
-                                e = tempE;
-                                obj.e = e - previousE;
-                            } else {
-                                obj.e = 0;
-                            }
-
-                            break;
-                        default:
-                            break;
-                    }
-                }
-
-                if (obj.x && obj.y && z !== '') {
-                    obj.z = z;
-                    obj.color = color;
-
-                    if (layersHeights.indexOf(z) === -1) {
-                        layersHeights.push(z);
+                                break;
+                            default:
+                                break;
+                        }
                     }
 
-                    result.push(obj);
-                }
+                    if (obj.x && obj.y && z !== '') {
+                        obj.z = z;
+                        obj.color = color;
+
+                        if (layersHeights.indexOf(z) === -1) {
+                            layersHeights.push(z);
+                        }
+
+                        result.push(obj);
+                    }
+                    break;
+                default:
+                    break;
             }
 
         }
