@@ -195,19 +195,21 @@ document.getElementById('file').onchange = function() {
         layersHeights.splice(0, 3);
         layersHeights = layersHeights.map(Number);
 
-        centerX = (objInfo.maxX - objInfo.minX) / 2 + objInfo.minX;
-        centerY = (objInfo.maxY - objInfo.minY) / 2 + objInfo.minY;
-        objInfo.modelLenght = objInfo.maxY - objInfo.minY;
-        objInfo.modelWidth = objInfo.maxX - objInfo.minX;
-        objInfo.modelHeight = objInfo.maxZ - objInfo.minZ;
-        objInfo.layersQuantity = layersHeights.length;
-        objInfo.fillamentWeight = (objInfo.filamentUsed * Math.pow(0.175/2, 2) * Math.PI) * 1.25;
-        objInfo.fileName = fileName;
+        centerX = (objInfo.MAXX - objInfo.MINX) / 2 + objInfo.MINX;
+        centerY = (objInfo.MAXY - objInfo.MINY) / 2 + objInfo.MINY;
+        objInfo.model_length = objInfo.MAXY - objInfo.MINY;
+        objInfo.model_width = objInfo.MAXX - objInfo.MINX;
+        objInfo.model_height = objInfo.MAXZ - objInfo.MINZ;
+        objInfo.layers_quantity = layersHeights.length;
+        objInfo.filament_weight = (objInfo.filament_used * Math.pow(0.175/2, 2) * Math.PI) * 1.25;
+        objInfo.filament_weight = Math.round(objInfo.filament_weight) + 'g'
+        objInfo.filament_used = (objInfo.filament_used.toFixed(0)) + 'cm';
+        objInfo.model_name = fileName;
 
         addModelInfo(objInfo);
 
         startClip.constant = 0;
-        endClip.constant = objInfo.modelHeight + 0.1;
+        endClip.constant = objInfo.model_height + 0.1;
 
         if (slider.noUiSlider !== undefined) {
             slider.noUiSlider.updateOptions({
@@ -242,7 +244,7 @@ document.getElementById('file').onchange = function() {
             startClip.constant = -(layersHeights[parseFloat(values[0])-1]- 0.1);
             endClip.constant = layersHeights[parseFloat(values[1])-1] + 0.1;
         });
-    };
+    }
 
     reader.readAsText(file);
 };
@@ -327,15 +329,8 @@ function changeVisibility(type) {
 }
 
 function addModelInfo(objInfo) {
-    document.getElementById("model_name").innerHTML = objInfo.fileName;
-    document.getElementById("print_time").innerHTML = objInfo.time;
-    document.getElementById("filament_used").innerHTML = (objInfo.filamentUsed.toFixed(0)) + 'cm';
-    document.getElementById("filament_weight").innerHTML = Math.round(objInfo.fillamentWeight) + 'g';
-    document.getElementById("layers_quantity").innerHTML = objInfo.layersQuantity;
-    document.getElementById("layer_height").innerHTML = objInfo.minZ;
-    document.getElementById("model_height").innerHTML = objInfo.modelHeight;
-    document.getElementById("model_width").innerHTML = objInfo.modelWidth;
-    document.getElementById("model_length").innerHTML = objInfo.modelLenght;
-    document.getElementById("flavor").innerHTML = objInfo.flavor;
-    document.getElementById("generated").innerHTML = objInfo.generatedWith;
+    let arr = document.querySelectorAll('.infoFields');
+    for (let i = 0; i < arr.length; i++) {
+        arr[i].innerHTML = objInfo[arr[i].id];
+    }
 }
